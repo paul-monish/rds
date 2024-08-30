@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Details</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        clifford: '#da373d',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 flex items-center justify-center min-h-screen">
+    <main class="flex flex-col w-full justify-center items-center px-3 sm:px-0">
+        <div
+            class="bg-[#1f3557] rounded-lg shadow-lg flex gap-3 justify-evenly items-center px-[2%] w-auto min-w-[50%] py-4 flex-wrap">
+            <div class="flex h-auto justify-start items-center pr-7">
+                <img src="/assets/sionline.jpg" alt="SI Online" class="h-32 w-auto rounded-lg">
+            </div>
+
+            <div class="mb-4 flex place-content-center align-middle items-center">
+                <div>
+                    <h2 class="text-lg text-white">Payment Details</h2>
+                    <div class="text-white text-sm mt-2">
+                        <p><strong>Txn Id:</strong> [reservationId]</p>
+                        <p><strong>Txn Date:</strong> [txnDate]</p>
+                        <p><strong>PNR Amount:</strong> [txnAmount]</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col">
+                <div>
+                    <label class="block text-white">User Id:</label>
+                    <input id="userId" type="text" value="isarkar00001" readOnly
+                        class="mt-1 w-full p-2 bg-white rounded-md">
+                </div>
+                <div class="mt-4">
+                    <label class="block text-white">Txn Password:</label>
+                    <input id="txnPassword" type="password" class="mt-1 w-full p-2 bg-white rounded-md">
+                </div>
+                <div class="mt-8 flex justify-between">
+                    <button id="payNow" class="bg-green-500 text-white py-2 px-4 rounded-md">Pay Now</button>
+                    <button id="cancel" class="bg-red-500 text-white py-2 px-4 rounded-md">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 text-center flex justify-end w-1/2 pr-2">
+            <p id="timer" class="text-red-500 text-sm font-medium">Time left to complete payment: 30s</p>
+        </div>
+    </main>
+    <script>
+        let timeLeft = 30;
+        const timerElement = document.getElementById('timer');
+
+        const countdown = setInterval(() => {
+            timeLeft -= 1;
+            timerElement.innerText = `Time left to complete payment: ${timeLeft}s`;
+
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                window.location.href = '/error'; // Redirect to error page after 30 seconds
+            }
+        }, 1000);
+
+        if (performance.navigation.type === 1) { // Check if page is refreshed
+            window.location.href = '/error'; // Redirect to error page
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Push a dummy state to create a history entry
+            window.history.pushState(null, '', window.location.href);
+
+            // Listen for the popstate event
+            window.addEventListener('popstate', function (event) {
+                // Redirect to error page if user tries to navigate back
+                window.location.href = '/error';
+            });
+        });
+
+
+        // Add event listeners for buttons
+        document.getElementById('payNow').addEventListener('click', async () => {
+            const userId = document.getElementById('userId').value;
+            const txnPassword = document.getElementById('txnPassword').value;
+
+            try {
+                const response = await fetch('/api/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId, txnPassword }),
+                });
+
+                if (response.ok) {
+                    // Replace history state so the user cannot navigate back to the form page
+                    window.history.replaceState(null, '', '/success');
+                    window.location.href = '/success'; // Redirect on successful payment
+                } else {
+                    window.history.replaceState(null, '', '/error');
+                    window.location.href = '/error'; // Redirect on failed payment
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                window.history.replaceState(null, '', '/error');
+                window.location.href = '/error'; // Redirect on error
+            }
+        });
+
+        document.getElementById('cancel').addEventListener('click', () => {
+            window.history.replaceState(null, '', '/error');
+            window.location.href = '/error';
+        });
+    </script>
+</body>
+
+</html>
